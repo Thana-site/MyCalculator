@@ -1,9 +1,10 @@
 import streamlit as st
 
-from ui import calculator, solver, graph, area, matrix
+from ui import calculator, solver, graph, area, matrix, theme
 
 st.set_page_config(page_title="Math Tool", page_icon="🧮", layout="centered")
-st.title("🧮 Math Tool")
+theme.inject()
+theme.sidebar_brand("Math Tool", "v0.1.0")
 
 PAGES = {
     "Calculator": calculator,
@@ -13,5 +14,5 @@ PAGES = {
     "Matrix": matrix,
 }
 
-choice = st.sidebar.radio("Mode", list(PAGES.keys()))
+choice = st.sidebar.radio("Mode", list(PAGES.keys()), label_visibility="collapsed")
 PAGES[choice].render()
