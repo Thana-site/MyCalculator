@@ -1,0 +1,5 @@
+streamlit>=1.32
+sympy>=1.12
+numpy>=1.26
+scipy>=1.12
+plotly>=5.20
