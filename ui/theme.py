@@ -204,6 +204,14 @@ div[class*="st-key-key-ac"] .stButton > button {
 div[class*="st-key-key-eq"] .stButton > button {
   background: var(--accent) !important; color: var(--on-accent) !important; font-weight:700 !important;
 }
+
+/* ---------- History / Memory side panel ---------- */
+.hist-entry { padding:10px 0; border-bottom:1px solid var(--border-soft); }
+.hist-entry:last-child { border-bottom:none; }
+.hist-in { font-family: var(--font-mono); font-size:11.5px; color: var(--text-muted); text-align:right; word-break:break-all; }
+.hist-out { font-family: var(--font-mono); font-size:16px; font-weight:600; color: var(--text-primary); text-align:right; margin-top:2px; word-break:break-all; }
+.mem-value { font-family: var(--font-mono); font-size:24px; font-weight:600; color: var(--text-primary); text-align:right; padding:16px 0; word-break:break-all; }
+.empty-note { color: var(--text-muted); font-size:12.5px; padding:6px 0; }
 </style>
 """
 
@@ -255,6 +263,23 @@ def lcd_display(prev_line: str, curr_line: str) -> None:
         f'<div class="lcd-result">{curr_line or "0"}</div>'
         f'</div>'
     )
+
+
+def history_entry(input_line: str, output_line: str) -> None:
+    st.html(
+        f'<div class="hist-entry">'
+        f'<div class="hist-in">{input_line}</div>'
+        f'<div class="hist-out">{output_line}</div>'
+        f'</div>'
+    )
+
+
+def memory_value(value_html: str) -> None:
+    st.html(f'<div class="mem-value">{value_html}</div>')
+
+
+def empty_note(text: str) -> None:
+    st.html(f'<div class="empty-note">{text}</div>')
 
 
 def note(html: str, err: bool = False) -> None:
