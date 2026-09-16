@@ -33,6 +33,15 @@ _CSS = """
   --red-bg:#3A2222;
   --amber:#FFC46B;
   --amber-bg:#3A2E15;
+  --shift:#F5A623;
+  --alpha:#E8574B;
+  --del-bg:#3C7A52;
+  --ac-bg:#A8433A;
+  --lcd-bg:#C8D6C2;
+  --lcd-bg-2:#BCCBB5;
+  --lcd-text:#16220F;
+  --lcd-text-dim:#4B5A46;
+  --lcd-border:#8FA88A;
   --font-ui:'Inter', sans-serif;
   --font-mono:'IBM Plex Mono', monospace;
 }
@@ -172,6 +181,32 @@ div[class*="st-key-"][class*="-card"] {
 .note { border-left:2px solid var(--amber); background: var(--amber-bg); padding:12px 14px; font-size:12px; color: var(--text-secondary); margin-top:14px; border-radius:0 8px 8px 0; }
 .note.err { border-color: var(--red); background: var(--red-bg); }
 .note strong { color: var(--text-primary); font-weight:600; }
+
+/* ---------- LCD screen (Casio-style display) ---------- */
+.lcd {
+  background: linear-gradient(180deg, var(--lcd-bg), var(--lcd-bg-2));
+  border: 1px solid var(--lcd-border); border-radius: 6px;
+  padding: 16px 18px 14px; margin-bottom: 4px;
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.25);
+}
+.lcd-status { display:flex; justify-content:flex-end; gap:10px; margin-bottom:6px; }
+.lcd-status .ind { font-family: var(--font-mono); font-size:9.5px; letter-spacing:0.5px; color: rgba(22,34,15,0.28); }
+.lcd-status .ind.on { color: var(--lcd-text-dim); font-weight:600; }
+.lcd-hist { font-family: var(--font-mono); font-size:13px; color: var(--lcd-text-dim); text-align:right; margin:0 0 4px; word-break:break-all; min-height:16px; }
+.lcd-result { font-family: var(--font-mono); font-size:28px; font-weight:600; color: var(--lcd-text); text-align:right; word-break:break-all; line-height:1.2; min-height:34px; }
+
+/* ---------- Keyed buttons (st.container(key=...)) ---------- */
+div[class*="st-key-key-del"] .stButton > button {
+  background: var(--del-bg) !important; color: #fff !important; font-family: var(--font-ui) !important; font-weight:600 !important;
+}
+div[class*="st-key-key-ac"] .stButton > button {
+  background: var(--ac-bg) !important; color: #fff !important; font-family: var(--font-ui) !important; font-weight:600 !important;
+}
+div[class*="st-key-key-eq"] .stButton > button {
+  background: var(--accent) !important; color: var(--on-accent) !important; font-weight:700 !important;
+}
+div[class*="st-key-key-shift"] .stButton > button { color: var(--shift) !important; }
+div[class*="st-key-key-alpha"] .stButton > button { color: var(--alpha) !important; }
 </style>
 """
 
@@ -210,6 +245,21 @@ def result_display(hist_line: str, result_html: str) -> None:
         f'<div class="calc-display">'
         f'<p class="calc-hist-line">{hist_line}</p>'
         f'<div class="calc-result">{result_html}</div>'
+        f'</div>'
+    )
+
+
+def lcd_display(hist_line: str, result_html: str, shift: bool = False, alpha: bool = False) -> None:
+    """A Casio-style LCD screen: light background, status indicators, right-aligned mono text."""
+    st.html(
+        f'<div class="lcd">'
+        f'<div class="lcd-status">'
+        f'<span class="ind on">MATH</span>'
+        f'<span class="ind {"on" if shift else ""}">SHIFT</span>'
+        f'<span class="ind {"on" if alpha else ""}">ALPHA</span>'
+        f'</div>'
+        f'<p class="lcd-hist">{hist_line}</p>'
+        f'<div class="lcd-result">{result_html}</div>'
         f'</div>'
     )
 
