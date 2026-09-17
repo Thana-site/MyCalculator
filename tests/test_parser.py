@@ -75,6 +75,21 @@ class TestExpressionGolden:
         # canonical representation should not collapse to a float
         assert parse_expression("1/3") == sp.Rational(1, 3)
 
+    def test_asin_golden(self):
+        assert parse_expression("asin(1)") == sp.pi / 2
+
+    def test_acos_golden(self):
+        assert parse_expression("acos(1)") == 0
+
+    def test_atan_golden(self):
+        assert parse_expression("atan(1)") == sp.pi / 4
+
+    def test_factorial(self):
+        assert parse_expression("factorial(5)") == 120
+
+    def test_infinity_constant(self):
+        assert parse_expression("oo") == sp.oo
+
 
 # ---------------------------------------------------------------------------
 # Expression — invalid cases
@@ -96,6 +111,16 @@ class TestExpressionInvalid:
     def test_unknown_function_rejected(self):
         with pytest.raises(InvalidExpressionError):
             parse_expression("foo(x)")
+
+    @pytest.mark.parametrize(
+        "text", ["csc(x)", "sec(x)", "cot(x)", "acsc(x)", "asec(x)", "acot(x)"]
+    )
+    def test_reserved_trig_functions_not_yet_whitelisted(self, text):
+        # csc/sec/cot (and inverses) are cosmetic-only placeholders in the UI
+        # for this phase; the parser must still reject them like any unknown
+        # function rather than silently accepting them.
+        with pytest.raises(InvalidExpressionError):
+            parse_expression(text)
 
     def test_arbitrary_python_not_reachable(self):
         # controlled namespace: no access to __import__, open, etc.
@@ -124,6 +149,33 @@ class TestExpressionInvariants:
         e1 = parse_expression("2*x**2 + 3*x - 5")
         e2 = parse_expression("2x^2 + 3x - 5")
         assert sp.simplify(e1 - e2) == 0
+
+
+class TestInverseTrigInvariants:
+    @pytest.mark.parametrize(
+        "value",
+        [sp.Rational(1, 2), sp.Rational(-1, 2), sp.sqrt(2) / 2, 0, 1, -1],
+    )
+    def test_asin_sin_round_trip(self, value):
+        expr = sp.sin(parse_expression(f"asin({value})"))
+        assert sp.simplify(expr - value) == 0
+
+    @pytest.mark.parametrize(
+        "value",
+        [sp.Rational(1, 2), sp.Rational(-1, 2), sp.sqrt(2) / 2, 0, 1, -1],
+    )
+    def test_acos_cos_round_trip(self, value):
+        expr = sp.cos(parse_expression(f"acos({value})"))
+        assert sp.simplify(expr - value) == 0
+
+    @pytest.mark.parametrize("value", [0, 1, -1, sp.Rational(1, 2)])
+    def test_atan_tan_round_trip(self, value):
+        expr = sp.tan(parse_expression(f"atan({value})"))
+        assert sp.simplify(expr - value) == 0
+
+    def test_factorial_matches_sympy_directly(self):
+        for n in range(6):
+            assert parse_expression(f"factorial({n})") == sp.factorial(n)
 
 
 # ---------------------------------------------------------------------------

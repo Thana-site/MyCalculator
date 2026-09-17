@@ -39,17 +39,22 @@ _ALLOWED_FUNCTIONS = {
     "sin": sp.sin,
     "cos": sp.cos,
     "tan": sp.tan,
+    "asin": sp.asin,
+    "acos": sp.acos,
+    "atan": sp.atan,
     "sqrt": sp.sqrt,
     "log": sp.log,
     "ln": sp.log,      # canonical output is sp.log either way
     "exp": sp.exp,
     "abs": sp.Abs,      # stays symbolic (sp.Abs), never Python abs()
+    "factorial": sp.factorial,
 }
 
 _ALLOWED_CONSTANTS = {
     "pi": sp.pi,
     "e": sp.E,
     "E": sp.E,
+    "oo": sp.oo,
 }
 
 _GLOBAL_DICT = {
@@ -65,7 +70,10 @@ _GLOBAL_DICT = {
 }
 
 # Function *classes* an AST is allowed to contain, for post-parse validation.
-_ALLOWED_FUNC_CLASSES = {sp.sin, sp.cos, sp.tan, sp.log, sp.exp, sp.Abs}
+_ALLOWED_FUNC_CLASSES = {
+    sp.sin, sp.cos, sp.tan, sp.asin, sp.acos, sp.atan,
+    sp.log, sp.exp, sp.Abs, sp.factorial,
+}
 
 _TRANSFORMATIONS = standard_transformations + (implicit_multiplication_application,)
 
