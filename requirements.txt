@@ -2,13 +2,12 @@ sympy>=1.12
 numpy>=1.26
 scipy>=1.12
 
-# FastAPI + static HTML backend
+# FastAPI + static HTML backend (primary)
 fastapi>=0.110
 uvicorn[standard]>=0.29
 pydantic>=2.6
 
-# Streamlit UI (primary — full feature set: SHIFT+tabs calculator,
-# multi-function graph, matrix grid input, persistent history)
+# Streamlit UI (legacy, unmaintained — kept for reference)
 streamlit>=1.37
 plotly>=5.20
 pandas>=2.0
