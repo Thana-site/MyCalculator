@@ -51,8 +51,50 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
   color: var(--text-primary) !important;
   font-family: var(--font-ui) !important;
 }
+
+/* ---------- Responsive layout: scroll instead of clip ----------
+   Streamlit (and some browsers, on short/mobile viewports) can end up
+   with an ancestor that clips overflow instead of letting the page
+   scroll, which hides the bottom keypad rows with no way to reach them.
+   Force every layer between <html> and the page content to size to its
+   content and allow vertical scrolling, so "too tall for the viewport"
+   always degrades to a scrollbar, never to clipped content. */
+html, body {
+  height: auto !important;
+  min-height: 100%;
+  overflow-y: auto !important;
+}
+[data-testid="stAppViewContainer"] {
+  height: auto !important;
+  min-height: 100vh;
+  overflow-y: auto !important;
+}
+[data-testid="stMain"] {
+  height: auto !important;
+  min-height: 100vh;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
 [data-testid="stHeader"] { background: transparent !important; }
-[data-testid="stMain"] .block-container { padding-top: 2.5rem; max-width: 900px; }
+[data-testid="stMain"] .block-container {
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
+  max-width: 900px;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+
+/* Below ~700px of viewport height, the keypad is the tallest thing on
+   the page — tighten spacing/typography so more of it fits without
+   scrolling, using vh-based clamp()s rather than a fixed breakpoint
+   value, so it scales smoothly instead of snapping. */
+@media (max-height: 700px) {
+  [data-testid="stMain"] .block-container { padding-top: 1rem; padding-bottom: 1rem; }
+  .lcd { padding: clamp(8px, 2vh, 16px) clamp(10px, 2.2vh, 18px) clamp(6px, 1.6vh, 14px); }
+  .lcd-result { font-size: clamp(18px, 4vh, 28px); min-height: 0; }
+  div[class*="st-key-"][class*="-card"] { padding: clamp(10px, 2vh, 18px) clamp(12px, 2.2vh, 20px); }
+}
 
 /* ---------- Sidebar ---------- */
 [data-testid="stSidebar"] {
@@ -100,15 +142,21 @@ div[class*="st-key-"][class*="-card"] {
   margin-bottom: 14px;
 }
 
-/* ---------- Buttons (keypad etc.) ---------- */
+/* ---------- Buttons (keypad etc.) ----------
+   Padding/font-size scale with viewport height via clamp(), so on a
+   short window (e.g. 600-700px tall) keys shrink a bit and more of the
+   keypad fits before scrolling is ever needed, instead of a fixed size
+   that's either too big for short screens or unnecessarily small on
+   tall ones. */
 .stButton > button {
   background: var(--bg-key) !important;
   color: var(--text-primary) !important;
   border: none !important;
   border-radius: 8px !important;
   font-family: var(--font-mono) !important;
-  font-size: 14.5px !important;
-  padding: 13px 0 !important;
+  font-size: clamp(12px, 1.9vh, 14.5px) !important;
+  padding: clamp(7px, 1.7vh, 13px) 0 !important;
+  min-height: 32px;
   transition: background 0.1s ease;
 }
 .stButton > button:hover { background: var(--bg-key-hover) !important; color: var(--accent) !important; }
@@ -206,6 +254,10 @@ div[class*="st-key-key-eq"] .stButton > button {
 }
 
 /* ---------- History / Memory side panel ---------- */
+/* ---------- Keypad row spacers (scale with viewport height, not fixed px) ---------- */
+.kp-gap { height: clamp(4px, 1.2vh, 10px); }
+.kp-gap-sm { height: clamp(3px, 0.8vh, 6px); }
+
 .hist-entry { padding:10px 0; border-bottom:1px solid var(--border-soft); }
 .hist-entry:last-child { border-bottom:none; }
 .hist-in { font-family: var(--font-mono); font-size:11.5px; color: var(--text-muted); text-align:right; word-break:break-all; }

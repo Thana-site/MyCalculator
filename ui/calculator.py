@@ -258,7 +258,7 @@ def _render_history_chips() -> None:
         entries = []
     if not entries:
         return
-    st.html('<div style="height:6px"></div>')
+    st.html('<div class="kp-gap-sm"></div>')
     cols = st.columns(len(entries))
     for col, entry in zip(cols, entries):
         with col.container(key=f"chip-{entry.id}"):
@@ -282,13 +282,13 @@ def _render_keypad() -> None:
             label_visibility="collapsed",
         )
 
-        st.html('<div style="height:10px"></div>')
+        st.html('<div class="kp-gap"></div>')
 
         mem_cols = st.columns(5)
         for col, (label, action) in zip(mem_cols, _MEM_ROW):
             _keyed_button(col, label, f"mem-{action}", _MEM_ACTIONS[action])
 
-        st.html('<div style="height:6px"></div>')
+        st.html('<div class="kp-gap-sm"></div>')
 
         shift_col = st.columns(1)[0]
         with shift_col.container(key="key-shift-toggle"):
@@ -301,7 +301,7 @@ def _render_keypad() -> None:
                 width="stretch",
             )
 
-        st.html('<div style="height:6px"></div>')
+        st.html('<div class="kp-gap-sm"></div>')
 
         tab_labels = [name for name, _ in _TABS]
         tabs = st.tabs(tab_labels)
@@ -309,7 +309,7 @@ def _render_keypad() -> None:
             with tab:
                 _render_function_grid(rows)
 
-        st.html('<div style="height:6px"></div>')
+        st.html('<div class="kp-gap-sm"></div>')
 
         for row in _NUM_ROWS:
             cols = st.columns(5)

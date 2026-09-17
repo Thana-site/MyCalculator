@@ -88,7 +88,7 @@ def render() -> None:
         with col_panel:
             _render_algebra_panel()
 
-            st.html('<div style="height:10px"></div>')
+            st.html('<div class="kp-gap"></div>')
             bound_cols = st.columns(2)
             x_min = bound_cols[0].number_input("x min", value=-10.0, key="graph_xmin")
             x_max = bound_cols[1].number_input("x max", value=10.0, key="graph_xmax")
