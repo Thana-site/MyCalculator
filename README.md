@@ -8,16 +8,16 @@ A calculator suite: arithmetic/symbolic calculator, equation solver, graph plott
 - **Equation Solver** — solve algebraic equations
 - **Graph Plotter** — plot multiple single-variable functions at once (add/remove/toggle-visible rows, each its own color), with Plotly pan/zoom (`dragmode="pan"`, `scrollZoom`) — in both frontends
 - **Area Under Curve** — numerical/symbolic integration
-- **Matrix** — determinant, inverse, and other matrix operations, including solving `Ax = b`. The Streamlit UI uses a grid/table editor (`st.data_editor`) you can paste directly from Excel/Sheets into, instead of typing bracket syntax — see the parity note below
+- **Matrix** — determinant, inverse, and other matrix operations, including solving `Ax = b`. Both frontends use a resizable grid/table editor you can paste directly from Excel/Sheets into (arrow keys / Tab / Enter to navigate), rather than typing bracket syntax
 - **History** — every successful calculation, across every mode, is logged to a local SQLite database (`data/history.db`) and browsable/filterable/clearable from a dedicated History page in both frontends
 
 ### Parser whitelist (`engine/parser.py`)
 
 Allowed functions: `sin cos tan asin acos atan sqrt log ln exp abs factorial`. Allowed constants: `pi e E oo`. Everything else (`csc/sec/cot` and their inverses, `nCr`/`nPr`, `Σ`, `∫`, `∮`, `lim`, `d/dx`, `C(n,k)`/`P(n,k)`, `Π`) is intentionally **not** in the whitelist yet — the calculator's Trigonometry/Calculus tabs show these as disabled keys reserved for a future phase, rather than wiring them to something that would raise "Unknown function." (Same key set, same shift-mappings, same disabled list in both frontends.)
 
-`parse_matrix()` (bracket-text: `[[1,2],[3,4]]`) and `matrix_from_grid()` (a 2D list of cell strings, e.g. from a UI grid editor) both funnel through a shared private helper (`_matrix_from_str_rows()`), so the two input paths can never silently diverge in validation/parsing behavior.
+`parse_matrix()` (bracket-text: `[[1,2],[3,4]]`) and `matrix_from_grid()` (a 2D list of cell strings, e.g. from a UI grid editor) both funnel through a shared private helper (`_matrix_from_str_rows()`), so the two input paths can never silently diverge in validation/parsing behavior. The Streamlit grid (`ui/matrix.py`, `st.data_editor`) calls `matrix_from_grid()` directly in-process; the HTML grid (`web/static/app.js`, hand-rolled `<table>` of inputs) serializes its cells into bracket-text client-side and calls the existing `/api/matrix/*` endpoints (`parse_matrix()`) — same validation core either way, no backend changes needed for the grid UI.
 
-> **Frontend parity note:** the SHIFT/tabs calculator, multi-function graph (pan/zoom, add/remove/toggle), and History are now at parity between both frontends — same key layout, same behavior, same shared `data/history.db`. The **one remaining gap** is the matrix grid editor (`st.data_editor`, paste-from-Excel): that's Streamlit-only (`ui/matrix.py`). The HTML frontend's Matrix page still uses bracket-text input (`[[1,2],[3,4]]`) — functionally equivalent (same `engine/parser.py` underneath), just a different UI.
+> **Frontend parity note:** the SHIFT/tabs calculator, multi-function graph (pan/zoom, add/remove/toggle), matrix grid editor (paste-from-Excel, arrow-key/Tab/Enter navigation), and History are now at full parity between both frontends — same key layout, same behavior, same shared `data/history.db`.
 
 ## HTML + FastAPI (primary)
 
@@ -32,7 +32,7 @@ Open http://127.0.0.1:8000 — the API serves the frontend directly, no separate
 
 ## Streamlit (legacy, unmaintained)
 
-The original Streamlit UI (`app.py`, `ui/`) is kept in the repo for reference but no longer receives new features or fixes — everything going forward targets the HTML/FastAPI frontend above. Its one remaining edge over the HTML frontend is the matrix grid editor (see the parity note above), which was never ported.
+The original Streamlit UI (`app.py`, `ui/`) is kept in the repo for reference but no longer receives new features or fixes — everything going forward targets the HTML/FastAPI frontend above, which is now at full feature parity (see the parity note above).
 
 ```bash
 pip install -r requirements.txt

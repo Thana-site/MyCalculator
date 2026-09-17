@@ -228,7 +228,7 @@
       <div class="page-head">
         <p class="page-eyebrow">Matrix</p>
         <h2 class="page-title">Matrix</h2>
-        <p class="page-desc">Formats: [[1,2],[3,4]] &middot; 1,2;3,4 &middot; [1,2,3] (row) &middot; [1;2;3] (column) &middot; symbolic entries OK, e.g. [[E,2],[3,x]]</p>
+        <p class="page-desc">Click a cell to edit, or paste a block directly from Excel/Sheets. Symbolic entries OK, e.g. E, x, sin(theta).</p>
       </div>
 
       <div class="tab-row" id="matrix-tabs">
@@ -238,7 +238,8 @@
       </div>
 
       <div class="card matrix-tab" id="matrix-tab-single">
-        <input type="text" class="expr-text-input" id="matrix-a-single" placeholder="[[1,2],[3,4]]">
+        <p class="card-label">Matrix A</p>
+        <div class="matrix-grid-host" id="matrix-grid-single"></div>
         <select class="select-input" id="matrix-op-single">
           <option value="determinant">Determinant</option>
           <option value="inverse">Inverse</option>
@@ -251,9 +252,15 @@
       </div>
 
       <div class="card matrix-tab" id="matrix-tab-two" hidden>
-        <div class="two-col">
-          <input type="text" class="expr-text-input" id="matrix-a-two" placeholder="[[1,2],[3,4]]">
-          <input type="text" class="expr-text-input" id="matrix-b-two" placeholder="[[5,6],[7,8]]">
+        <div class="matrix-side-by-side">
+          <div>
+            <p class="card-label">Matrix A</p>
+            <div class="matrix-grid-host" id="matrix-grid-twoA"></div>
+          </div>
+          <div>
+            <p class="card-label">Matrix B</p>
+            <div class="matrix-grid-host" id="matrix-grid-twoB"></div>
+          </div>
         </div>
         <select class="select-input" id="matrix-op-two">
           <option value="add">Add</option>
@@ -265,9 +272,15 @@
       </div>
 
       <div class="card matrix-tab" id="matrix-tab-solve" hidden>
-        <div class="two-col">
-          <input type="text" class="expr-text-input" id="matrix-a-solve" placeholder="[[1,1],[1,-1]]">
-          <input type="text" class="expr-text-input" id="matrix-b-solve" placeholder="[3;1]">
+        <div class="matrix-side-by-side">
+          <div>
+            <p class="card-label">Matrix A</p>
+            <div class="matrix-grid-host" id="matrix-grid-solveA"></div>
+          </div>
+          <div>
+            <p class="card-label">Vector b</p>
+            <div class="matrix-grid-host" id="matrix-grid-solveB"></div>
+          </div>
         </div>
         <div class="math-out" id="matrix-solve-result"></div>
         <div class="note err" id="matrix-solve-error" hidden></div>

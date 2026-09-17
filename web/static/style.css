@@ -177,6 +177,33 @@ body{
   min-height:280px; height:min(72vh, 680px);
 }
 
+/* ---------- Matrix grid input ---------- */
+.matrix-side-by-side{ display:flex; gap:28px; flex-wrap:wrap; margin-bottom:4px; }
+.matrix-grid-host{ margin-bottom:14px; }
+.matrix-dim-controls{ display:flex; gap:10px; align-items:center; margin-bottom:8px; }
+.matrix-dim-controls label{ font-size:11px; color:var(--text-muted); font-family:var(--font-mono); }
+.matrix-dim-controls input[type="number"]{
+  width:48px; padding:4px 6px; border-radius:6px; border:1px solid var(--border);
+  background:var(--bg-key); color:var(--text-primary); font-family:var(--font-mono); font-size:12.5px;
+}
+.matrix-grid-table{ border-collapse:collapse; }
+.matrix-grid-table td, .matrix-grid-table th{ padding:0; border:1px solid var(--border-soft); }
+.matrix-grid-table th{
+  background:var(--bg-key); color:var(--text-muted); font-family:var(--font-mono);
+  font-size:11px; font-weight:700; text-align:center; min-width:48px; height:22px; user-select:none;
+}
+.matrix-grid-table th.matrix-corner{ background:var(--bg-panel); }
+.matrix-grid-table th.matrix-row-num{ width:26px; }
+.matrix-grid-table th.active-header{ background:var(--accent); color:var(--on-accent); }
+.matrix-grid-table input.matrix-cell{
+  width:48px; height:28px; text-align:center; border:none; border-radius:0;
+  background:var(--bg-panel-2); color:var(--text-primary); font-family:var(--font-mono); font-size:13px; display:block;
+}
+.matrix-grid-table input.matrix-cell:focus{ outline:2px solid var(--accent); outline-offset:-2px; position:relative; z-index:1; }
+.matrix-grid-table input.matrix-cell.text-cell{ color:var(--amber); text-align:left; padding-left:6px; }
+.matrix-grid-table tr:nth-child(even) td input.matrix-cell{ background:var(--bg-app); }
+.matrix-paste-hint{ font-size:10.5px; color:var(--text-muted); margin:6px 0 0; }
+
 /* ---------- Graph algebra panel (multi-function) ---------- */
 /* Graph Plotter's card intentionally ignores the shared 900px cap so the
    chart can use the full browser width instead of sitting boxed on the left. */

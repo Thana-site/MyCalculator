@@ -716,6 +716,190 @@ const Area = (() => {
 // ---------------------------------------------------------------------------
 
 const Matrix = (() => {
+  // A resizable spreadsheet-style grid for entering a matrix's cell values.
+  // Cell values are plain strings (parsed server-side via parse_matrix()),
+  // so any function whitelisted there — including symbolic entries like
+  // "E" or "sin(theta)" — works exactly as it does in the text-input form.
+  function createGrid(host, defaultRows, defaultCols, opts = {}) {
+    const lockCols = opts.lockCols || false; // vector b: cols fixed at 1
+    let data = Array.from({ length: defaultRows }, () => Array.from({ length: defaultCols }, () => "0"));
+
+    const controls = document.createElement("div");
+    controls.className = "matrix-dim-controls";
+
+    const rowsLabel = document.createElement("label");
+    rowsLabel.textContent = "Rows";
+    const rowsInput = document.createElement("input");
+    rowsInput.type = "number"; rowsInput.min = 1; rowsInput.max = 6; rowsInput.value = defaultRows;
+    controls.appendChild(rowsLabel); controls.appendChild(rowsInput);
+
+    let colsInput = null;
+    if (!lockCols) {
+      const colsLabel = document.createElement("label");
+      colsLabel.textContent = "Cols";
+      colsInput = document.createElement("input");
+      colsInput.type = "number"; colsInput.min = 1; colsInput.max = 6; colsInput.value = defaultCols;
+      controls.appendChild(colsLabel); controls.appendChild(colsInput);
+    }
+
+    const tableHost = document.createElement("div");
+    const hint = document.createElement("p");
+    hint.className = "matrix-paste-hint";
+    hint.textContent = "Paste a block from Excel/Sheets, or navigate with arrow keys / Tab / Enter.";
+
+    host.appendChild(controls);
+    host.appendChild(tableHost);
+    host.appendChild(hint);
+
+    function colLetter(idx) {
+      return String.fromCharCode(65 + idx); // grids cap at 6 cols, so A-F
+    }
+
+    function notify() {
+      opts.onChange && opts.onChange(getData());
+    }
+
+    function renderTable() {
+      const table = document.createElement("table");
+      table.className = "matrix-grid-table";
+
+      const headerRow = document.createElement("tr");
+      const corner = document.createElement("th");
+      corner.className = "matrix-corner";
+      headerRow.appendChild(corner);
+      data[0].forEach((_, c) => {
+        const th = document.createElement("th");
+        th.textContent = colLetter(c);
+        headerRow.appendChild(th);
+      });
+      table.appendChild(headerRow);
+
+      data.forEach((row, r) => {
+        const tr = document.createElement("tr");
+        const rowHeader = document.createElement("th");
+        rowHeader.className = "matrix-row-num";
+        rowHeader.textContent = String(r + 1);
+        rowHeader.dataset.r = r;
+        tr.appendChild(rowHeader);
+
+        row.forEach((val, c) => {
+          const td = document.createElement("td");
+          const input = document.createElement("input");
+          input.className = "matrix-cell";
+          input.value = val;
+          input.dataset.r = r;
+          input.dataset.c = c;
+          classifyCell(input);
+
+          input.addEventListener("input", () => {
+            data[r][c] = input.value;
+            classifyCell(input);
+            notify();
+          });
+          input.addEventListener("focus", () => setActiveHeaders(r, c));
+          input.addEventListener("blur", clearActiveHeaders);
+          input.addEventListener("keydown", (e) => handleNav(e, r, c));
+          input.addEventListener("paste", (e) => {
+            const text = (e.clipboardData || window.clipboardData).getData("text");
+            if (text.includes("\t") || text.includes("\n")) {
+              e.preventDefault();
+              const rows = text.trim().split("\n").map((line) => line.split("\t"));
+              rows.forEach((prow, pr) => {
+                prow.forEach((pval, pc) => {
+                  if (data[r + pr] && data[r + pr][c + pc] !== undefined) data[r + pr][c + pc] = pval.trim();
+                });
+              });
+              renderTable();
+              notify();
+            }
+          });
+          td.appendChild(input);
+          tr.appendChild(td);
+        });
+        table.appendChild(tr);
+      });
+
+      tableHost.innerHTML = "";
+      tableHost.appendChild(table);
+
+      function classifyCell(input) {
+        const isNumeric = input.value.trim() !== "" && !isNaN(parseFloat(input.value)) && isFinite(input.value);
+        input.classList.toggle("numeric", isNumeric);
+        input.classList.toggle("text-cell", !isNumeric && input.value.trim() !== "");
+      }
+      function setActiveHeaders(r, c) {
+        table.querySelectorAll("th").forEach((th) => th.classList.remove("active-header"));
+        const rowTh = table.querySelector(`th.matrix-row-num[data-r="${r}"]`);
+        if (rowTh) rowTh.classList.add("active-header");
+        const colTh = table.rows[0].cells[c + 1]; // +1 for the corner cell
+        if (colTh) colTh.classList.add("active-header");
+      }
+      function clearActiveHeaders() {
+        table.querySelectorAll("th").forEach((th) => th.classList.remove("active-header"));
+      }
+      function focusCell(r, c) {
+        const target = table.querySelector(`input.matrix-cell[data-r="${r}"][data-c="${c}"]`);
+        if (target) { target.focus(); target.select(); }
+      }
+      function handleNav(e, r, c) {
+        const maxR = data.length - 1, maxC = data[0].length - 1;
+        if (e.key === "ArrowDown" || (e.key === "Enter" && !e.shiftKey)) { e.preventDefault(); focusCell(Math.min(r + 1, maxR), c); }
+        else if (e.key === "ArrowUp") { e.preventDefault(); focusCell(Math.max(r - 1, 0), c); }
+        else if (e.key === "ArrowLeft" && e.target.selectionStart === 0) { e.preventDefault(); focusCell(r, Math.max(c - 1, 0)); }
+        else if (e.key === "ArrowRight" && e.target.selectionStart === e.target.value.length) { e.preventDefault(); focusCell(r, Math.min(c + 1, maxC)); }
+        else if (e.key === "Tab") {
+          e.preventDefault();
+          const nc = c + (e.shiftKey ? -1 : 1);
+          if (nc > maxC) focusCell(Math.min(r + 1, maxR), 0);
+          else if (nc < 0) focusCell(Math.max(r - 1, 0), maxC);
+          else focusCell(r, nc);
+        }
+      }
+    }
+
+    function resize(newRows, newCols) {
+      data = Array.from({ length: newRows }, (_, r) =>
+        Array.from({ length: newCols }, (_, c) => (data[r] && data[r][c] !== undefined) ? data[r][c] : "0")
+      );
+      renderTable();
+    }
+
+    function getData() { return data.map((row) => row.slice()); }
+
+    rowsInput.addEventListener("change", () => {
+      const r = Math.max(1, Math.min(6, parseInt(rowsInput.value) || 1));
+      rowsInput.value = r;
+      resize(r, data[0] ? data[0].length : defaultCols);
+      notify();
+    });
+    if (colsInput) {
+      colsInput.addEventListener("change", () => {
+        const c = Math.max(1, Math.min(6, parseInt(colsInput.value) || 1));
+        colsInput.value = c;
+        resize(data.length, c);
+        notify();
+      });
+    }
+
+    renderTable();
+    return { getData };
+  }
+
+  // Serializes a grid's cell strings into the bracket-text grammar the
+  // existing /api/matrix/* endpoints already parse (parse_matrix()) — so
+  // no backend changes are needed to support the grid UI.
+  function toBracketText(rows) {
+    return "[" + rows.map((row) => "[" + row.map((v) => v.trim() || "0").join(",") + "]").join(",") + "]";
+  }
+
+  function debounced(fn, ms) {
+    let handle;
+    return (...args) => {
+      clearTimeout(handle);
+      handle = setTimeout(() => fn(...args), ms);
+    };
+  }
+
   function renderEigen(el, eigenvalues) {
     el.innerHTML = eigenvalues
       .map((e) => `<div>\\(${e.latex}\\) &nbsp; (&times;${e.multiplicity})</div>`)
@@ -724,20 +908,14 @@ const Matrix = (() => {
   }
 
   function initSingle() {
-    const matrixInput = document.getElementById("matrix-a-single");
     const opSelect = document.getElementById("matrix-op-single");
     const result = document.getElementById("matrix-single-result");
     const error = document.getElementById("matrix-single-error");
 
-    async function update() {
+    async function update(rows) {
       error.hidden = true;
-      const text = matrixInput.value;
-      if (!text.trim()) {
-        result.innerHTML = "";
-        return;
-      }
       try {
-        const data = await api("/api/matrix/single", { matrix: text, operation: opSelect.value });
+        const data = await api("/api/matrix/single", { matrix: toBracketText(rows), operation: opSelect.value });
         if (data.eigenvalues) renderEigen(result, data.eigenvalues);
         else if (data.latex) setLatex(result, data.latex);
         else result.textContent = data.plain;
@@ -747,30 +925,24 @@ const Matrix = (() => {
       }
     }
 
-    let debounce;
-    matrixInput.addEventListener("input", () => {
-      clearTimeout(debounce);
-      debounce = setTimeout(update, 300);
-    });
-    opSelect.addEventListener("change", update);
+    const grid = createGrid(document.getElementById("matrix-grid-single"), 2, 2, { onChange: debounced(update, 300) });
+    opSelect.addEventListener("change", () => update(grid.getData()));
+    update(grid.getData());
   }
 
   function initTwo() {
-    const aInput = document.getElementById("matrix-a-two");
-    const bInput = document.getElementById("matrix-b-two");
     const opSelect = document.getElementById("matrix-op-two");
     const result = document.getElementById("matrix-two-result");
     const error = document.getElementById("matrix-two-error");
+    let gridA, gridB;
 
     async function update() {
       error.hidden = true;
-      if (!aInput.value.trim() || !bInput.value.trim()) {
-        result.innerHTML = "";
-        return;
-      }
       try {
         const data = await api("/api/matrix/two", {
-          matrix_a: aInput.value, matrix_b: bInput.value, operation: opSelect.value,
+          matrix_a: toBracketText(gridA.getData()),
+          matrix_b: toBracketText(gridB.getData()),
+          operation: opSelect.value,
         });
         setLatex(result, data.latex);
       } catch (err) {
@@ -779,30 +951,25 @@ const Matrix = (() => {
       }
     }
 
-    let debounce;
-    [aInput, bInput].forEach((el) =>
-      el.addEventListener("input", () => {
-        clearTimeout(debounce);
-        debounce = setTimeout(update, 300);
-      })
-    );
+    const debouncedUpdate = debounced(update, 300);
+    gridA = createGrid(document.getElementById("matrix-grid-twoA"), 2, 2, { onChange: debouncedUpdate });
+    gridB = createGrid(document.getElementById("matrix-grid-twoB"), 2, 2, { onChange: debouncedUpdate });
     opSelect.addEventListener("change", update);
+    update();
   }
 
   function initSolve() {
-    const aInput = document.getElementById("matrix-a-solve");
-    const bInput = document.getElementById("matrix-b-solve");
     const result = document.getElementById("matrix-solve-result");
     const error = document.getElementById("matrix-solve-error");
+    let gridA, gridB;
 
     async function update() {
       error.hidden = true;
-      if (!aInput.value.trim() || !bInput.value.trim()) {
-        result.innerHTML = "";
-        return;
-      }
       try {
-        const data = await api("/api/matrix/solve", { matrix_a: aInput.value, vector_b: bInput.value });
+        const data = await api("/api/matrix/solve", {
+          matrix_a: toBracketText(gridA.getData()),
+          vector_b: toBracketText(gridB.getData()),
+        });
         setLatex(result, data.latex);
       } catch (err) {
         result.innerHTML = "";
@@ -810,13 +977,10 @@ const Matrix = (() => {
       }
     }
 
-    let debounce;
-    [aInput, bInput].forEach((el) =>
-      el.addEventListener("input", () => {
-        clearTimeout(debounce);
-        debounce = setTimeout(update, 300);
-      })
-    );
+    const debouncedUpdate = debounced(update, 300);
+    gridA = createGrid(document.getElementById("matrix-grid-solveA"), 2, 2, { onChange: debouncedUpdate });
+    gridB = createGrid(document.getElementById("matrix-grid-solveB"), 2, 1, { lockCols: true, onChange: debouncedUpdate });
+    update();
   }
 
   function initTabs() {
