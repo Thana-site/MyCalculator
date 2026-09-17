@@ -252,6 +252,11 @@ div[class*="st-key-key-ac"] .stButton > button {
 div[class*="st-key-key-eq"] .stButton > button {
   background: var(--accent) !important; color: var(--on-accent) !important; font-weight:700 !important;
 }
+/* Function key currently showing its SHIFT-ed symbol (armed SHIFT + a key
+   with a secondary function) — amber to match the SHIFT button itself. */
+div[class*="st-key-key-"][class*="-shifted"] .stButton > button {
+  background: var(--shift) !important; color: #1B1B1B !important; font-weight:700 !important;
+}
 
 /* ---------- History / Memory side panel ---------- */
 /* ---------- Keypad row spacers (scale with viewport height, not fixed px) ---------- */

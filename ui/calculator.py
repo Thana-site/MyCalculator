@@ -233,22 +233,31 @@ def _keyed_button(col, label: str, key: str, on_click) -> None:
 
 
 def _render_function_grid(rows: list) -> None:
+    shift_active = st.session_state.get("shift_active", False)
     for row in rows:
         cols = st.columns(4)
         for col, keydef in zip(cols, row):
-            with col.container(key=f"key-{keydef['key']}"):
-                if keydef.get("cosmetic"):
+            if keydef.get("cosmetic"):
+                with col.container(key=f"key-{keydef['key']}"):
                     st.button(
                         keydef["label"], key=f"btn_{keydef['key']}", disabled=True,
                         help="Reserved for a future phase", width="stretch",
                     )
-                else:
-                    hint = f"SHIFT → {keydef['shift'][0]}" if "shift" in keydef else None
-                    st.button(
-                        keydef["label"], key=f"btn_{keydef['key']}",
-                        on_click=_press_function_key, args=(keydef,),
-                        help=hint, width="stretch",
-                    )
+                continue
+
+            showing_shift = shift_active and "shift" in keydef
+            label = keydef["shift"][0] if showing_shift else keydef["label"]
+            hint = (
+                f"Unshifted → {keydef['label']}" if showing_shift
+                else (f"SHIFT → {keydef['shift'][0]}" if "shift" in keydef else None)
+            )
+            container_key = f"key-{keydef['key']}" + ("-shifted" if showing_shift else "")
+            with col.container(key=container_key):
+                st.button(
+                    label, key=f"btn_{keydef['key']}",
+                    on_click=_press_function_key, args=(keydef,),
+                    help=hint, width="stretch",
+                )
 
 
 def _render_history_chips() -> None:
