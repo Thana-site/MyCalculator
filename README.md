@@ -4,20 +4,20 @@ A calculator suite: arithmetic/symbolic calculator, equation solver, graph plott
 
 ## Features
 
-- **Calculator** — evaluate arithmetic and symbolic expressions (`2+2*3`, `sqrt(4)`, `sin(pi/2)`, `2x^2 + 3x - 5`), with history (plus reload chips) and memory (`MC`/`MR`/`M+`/`M-`/`MS`). The Streamlit UI's keypad has three tabs (Algebra / Trigonometry / Calculus) and a SHIFT modifier that arms a key's secondary function for exactly one press (e.g. SHIFT+sin → `asin(`), then auto-resets — see "Parser whitelist" below for what's wired for real vs. a grayed-out placeholder.
+- **Calculator** — evaluate arithmetic and symbolic expressions (`2+2*3`, `sqrt(4)`, `sin(pi/2)`, `2x^2 + 3x - 5`), with history (plus reload chips) and memory (`MC`/`MR`/`M+`/`M-`/`MS`). Both frontends' keypads have three tabs (Algebra / Trigonometry / Calculus) and a SHIFT modifier that arms a key's secondary function for exactly one press (e.g. SHIFT+sin → `asin(`), then auto-resets — see "Parser whitelist" below for what's wired for real vs. a grayed-out placeholder.
 - **Equation Solver** — solve algebraic equations
-- **Graph Plotter** — plot multiple single-variable functions at once (add/remove/toggle-visible rows, each its own color), with Plotly pan/zoom (`dragmode="pan"`, `scrollZoom`) — Streamlit UI only, see the parity note below
+- **Graph Plotter** — plot multiple single-variable functions at once (add/remove/toggle-visible rows, each its own color), with Plotly pan/zoom (`dragmode="pan"`, `scrollZoom`) — in both frontends
 - **Area Under Curve** — numerical/symbolic integration
 - **Matrix** — determinant, inverse, and other matrix operations, including solving `Ax = b`. The Streamlit UI uses a grid/table editor (`st.data_editor`) you can paste directly from Excel/Sheets into, instead of typing bracket syntax — see the parity note below
 - **History** — every successful calculation, across every mode, is logged to a local SQLite database (`data/history.db`) and browsable/filterable/clearable from a dedicated History page in both frontends
 
 ### Parser whitelist (`engine/parser.py`)
 
-Allowed functions: `sin cos tan asin acos atan sqrt log ln exp abs factorial`. Allowed constants: `pi e E oo`. Everything else (`csc/sec/cot` and their inverses, `nCr`/`nPr`, `Σ`, `∫`, `∮`, `lim`, `d/dx`, `C(n,k)`/`P(n,k)`, `Π`) is intentionally **not** in the whitelist yet — the calculator's Trigonometry/Calculus tabs show these as disabled keys reserved for a future phase, rather than wiring them to something that would raise "Unknown function."
+Allowed functions: `sin cos tan asin acos atan sqrt log ln exp abs factorial`. Allowed constants: `pi e E oo`. Everything else (`csc/sec/cot` and their inverses, `nCr`/`nPr`, `Σ`, `∫`, `∮`, `lim`, `d/dx`, `C(n,k)`/`P(n,k)`, `Π`) is intentionally **not** in the whitelist yet — the calculator's Trigonometry/Calculus tabs show these as disabled keys reserved for a future phase, rather than wiring them to something that would raise "Unknown function." (Same key set, same shift-mappings, same disabled list in both frontends.)
 
 `parse_matrix()` (bracket-text: `[[1,2],[3,4]]`) and `matrix_from_grid()` (a 2D list of cell strings, e.g. from a UI grid editor) both funnel through a shared private helper (`_matrix_from_str_rows()`), so the two input paths can never silently diverge in validation/parsing behavior.
 
-> **Frontend parity note:** the SHIFT/tabs calculator, multi-function graph pan/zoom, and matrix grid editor described above are **Streamlit UI only** (`ui/calculator.py`, `ui/graph.py`, `ui/matrix.py`). The static HTML/JS frontend (`web/`) still has the earlier flat-keypad calculator, single-function graph, and bracket-text matrix input. **History is the exception** — it's fully ported to both, and both write to the same `data/history.db`, so a calculation done in one frontend shows up in the other's History page.
+> **Frontend parity note:** the SHIFT/tabs calculator, multi-function graph (pan/zoom, add/remove/toggle), and History are now at parity between both frontends — same key layout, same behavior, same shared `data/history.db`. The **one remaining gap** is the matrix grid editor (`st.data_editor`, paste-from-Excel): that's Streamlit-only (`ui/matrix.py`). The HTML frontend's Matrix page still uses bracket-text input (`[[1,2],[3,4]]`) — functionally equivalent (same `engine/parser.py` underneath), just a different UI.
 
 ## HTML + FastAPI
 
@@ -32,7 +32,7 @@ Open http://127.0.0.1:8000 — the API serves the frontend directly, no separate
 
 ## Streamlit
 
-The original Streamlit UI (`app.py`, `ui/`) is kept alongside the FastAPI backend and currently has the more complete feature set (see the parity note above).
+The original Streamlit UI (`app.py`, `ui/`) is kept alongside the FastAPI backend. Its only remaining edge over the HTML frontend is the matrix grid editor (see the parity note above).
 
 ```bash
 pip install -r requirements.txt

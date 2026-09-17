@@ -48,7 +48,7 @@
         <div>
           <div class="card">
             <div class="lcd">
-              <div class="lcd-status"><span class="ind">MATH</span></div>
+              <div class="lcd-status"><span class="ind">MATH</span><span class="ind" id="calc-shift-indicator">SHIFT</span></div>
               <p class="lcd-hist" id="calc-hist"></p>
               <div class="lcd-result" id="calc-display">0</div>
             </div>
@@ -64,20 +64,14 @@
               <button class="key" data-mem="ms">MS</button>
             </div>
             <div class="keypad-gap-sm"></div>
-            <div class="key-grid cols-4" id="calc-sci-grid">
-              <button class="key" data-tok="^2">x&sup2;</button>
-              <button class="key" data-tok="log(">log</button>
-              <button class="key" data-tok="ln(">ln</button>
-              <button class="key" data-tok="abs(">abs</button>
-              <button class="key" data-tok="sin(">sin</button>
-              <button class="key" data-tok="cos(">cos</button>
-              <button class="key" data-tok="tan(">tan</button>
-              <button class="key" data-tok="^">x^y</button>
-              <button class="key" data-tok="(">(</button>
-              <button class="key" data-tok=")">)</button>
-              <button class="key" data-tok="pi">&pi;</button>
-              <button class="key" data-tok="e">e</button>
+            <button class="key shift-key" id="calc-shift-btn">SHIFT</button>
+            <div class="keypad-gap-sm"></div>
+            <div class="tab-row" id="calc-fn-tabs">
+              <button class="tab-btn active" data-fn-tab="algebra">Algebra</button>
+              <button class="tab-btn" data-fn-tab="trig">Trigonometry</button>
+              <button class="tab-btn" data-fn-tab="calculus">Calculus</button>
             </div>
+            <div class="key-grid cols-4" id="calc-sci-grid"></div>
             <div class="keypad-gap-sm"></div>
             <div class="key-grid cols-5">
               <button class="key" data-tok="7">7</button>
@@ -168,22 +162,32 @@
       <div class="page-head">
         <p class="page-eyebrow">Graph plotter</p>
         <h2 class="page-title">Graph Plotter</h2>
-        <p class="page-desc">Single-variable functions only, e.g. sin(x) + x^2, 1/x</p>
+        <p class="page-desc">Plot multiple single-variable functions at once. Drag to pan, scroll to zoom.</p>
       </div>
       <div class="card">
-        <input type="text" class="expr-text-input" id="graph-input" placeholder="e.g. sin(x) + x^2">
-        <div class="two-col">
-          <div>
-            <p class="card-label">x min</p>
-            <input type="number" class="num-input" id="graph-xmin" value="-10">
+        <div class="graph-workspace">
+          <div class="graph-panel">
+            <p class="card-label">Functions</p>
+            <div id="graph-fn-list"></div>
+            <button class="key" id="graph-add-fn">+ Add function</button>
+            <div class="keypad-gap-sm"></div>
+            <div class="two-col">
+              <div>
+                <p class="card-label">x min</p>
+                <input type="number" class="num-input" id="graph-xmin" value="-10">
+              </div>
+              <div>
+                <p class="card-label">x max</p>
+                <input type="number" class="num-input" id="graph-xmax" value="10">
+              </div>
+            </div>
           </div>
-          <div>
-            <p class="card-label">x max</p>
-            <input type="number" class="num-input" id="graph-xmax" value="10">
+          <div class="graph-canvas-wrap">
+            <div id="graph-plot" class="plot-box"></div>
+            <div class="note err" id="graph-error" hidden></div>
+            <p class="empty-note" id="graph-empty">Enter a function above to plot it &mdash; e.g. sin(x) + x^2, 1/x</p>
           </div>
         </div>
-        <div id="graph-plot" class="plot-box"></div>
-        <div class="note err" id="graph-error" hidden></div>
       </div>
     </section>
 
