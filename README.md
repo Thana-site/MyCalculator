@@ -19,9 +19,9 @@ Allowed functions: `sin cos tan asin acos atan sqrt log ln exp abs factorial`. A
 
 > **Frontend parity note:** the SHIFT/tabs calculator, multi-function graph (pan/zoom, add/remove/toggle), and History are now at parity between both frontends — same key layout, same behavior, same shared `data/history.db`. The **one remaining gap** is the matrix grid editor (`st.data_editor`, paste-from-Excel): that's Streamlit-only (`ui/matrix.py`). The HTML frontend's Matrix page still uses bracket-text input (`[[1,2],[3,4]]`) — functionally equivalent (same `engine/parser.py` underneath), just a different UI.
 
-## HTML + FastAPI
+## HTML + FastAPI (primary)
 
-A static HTML/CSS/JS frontend (`web/`) calling a FastAPI JSON backend (`api/`).
+A static HTML/CSS/JS frontend (`web/`) calling a FastAPI JSON backend (`api/`). This is the actively developed frontend — new features and fixes land here.
 
 ```bash
 pip install -r requirements.txt
@@ -30,9 +30,9 @@ uvicorn api.main:app --reload
 
 Open http://127.0.0.1:8000 — the API serves the frontend directly, no separate dev server needed. API docs (OpenAPI/Swagger) are at `/docs`.
 
-## Streamlit
+## Streamlit (legacy, unmaintained)
 
-The original Streamlit UI (`app.py`, `ui/`) is kept alongside the FastAPI backend. Its only remaining edge over the HTML frontend is the matrix grid editor (see the parity note above).
+The original Streamlit UI (`app.py`, `ui/`) is kept in the repo for reference but no longer receives new features or fixes — everything going forward targets the HTML/FastAPI frontend above. Its one remaining edge over the HTML frontend is the matrix grid editor (see the parity note above), which was never ported.
 
 ```bash
 pip install -r requirements.txt
@@ -52,6 +52,6 @@ pytest
 
 ## Deploying
 
-- **FastAPI**: any ASGI host (Render, Fly.io, Railway, a VM behind `uvicorn`/`gunicorn`). Entry point: `api.main:app`.
-- **Streamlit**: [Streamlit Community Cloud](https://streamlit.io/cloud), entry point `app.py`.
+- **FastAPI**: any ASGI host (Render, Fly.io, Railway, a VM behind `uvicorn`/`gunicorn`). Entry point: `api.main:app`. For now, local-only via `uvicorn api.main:app --reload` on http://127.0.0.1:8000.
+- **Streamlit**: [Streamlit Community Cloud](https://streamlit.io/cloud), entry point `app.py` — kept running as-is but not actively deployed to going forward.
 - Either way, `data/` (the SQLite history file) needs a writable, persistent volume if you want history to survive restarts/redeploys.
