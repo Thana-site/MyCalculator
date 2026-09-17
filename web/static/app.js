@@ -179,6 +179,7 @@ const Calc = (() => {
     shiftActive = on;
     els.shiftBtn.classList.toggle("active", on);
     els.shiftIndicator.classList.toggle("shift-on", on);
+    renderFnGrid();
   }
 
   async function refreshHistory() {
@@ -329,12 +330,17 @@ const Calc = (() => {
       for (const keydef of row) {
         const btn = document.createElement("button");
         btn.className = "key";
-        btn.textContent = keydef.label;
         if (keydef.cosmetic) {
+          btn.textContent = keydef.label;
           btn.disabled = true;
           btn.title = "Reserved for a future phase";
         } else {
-          if (keydef.shift) btn.title = `SHIFT → ${keydef.shift[0]}`;
+          const showingShift = shiftActive && !!keydef.shift;
+          btn.textContent = showingShift ? keydef.shift[0] : keydef.label;
+          btn.classList.toggle("shifted", showingShift);
+          btn.title = showingShift
+            ? `Unshifted → ${keydef.label}`
+            : (keydef.shift ? `SHIFT → ${keydef.shift[0]}` : "");
           btn.addEventListener("click", () => pressFunctionKey(keydef));
         }
         els.fnGrid.appendChild(btn);

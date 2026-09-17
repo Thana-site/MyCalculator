@@ -120,6 +120,8 @@ body{
 .key.eq{ background:var(--accent); color:var(--on-accent); font-weight:700; }
 .key:disabled{ opacity:0.4; cursor:not-allowed; }
 .key:disabled:hover{ background:var(--bg-key); color:var(--text-primary); }
+.key.shifted{ background:var(--amber); color:#1B1B1B; font-weight:700; }
+.key.shifted:hover{ background:var(--amber); color:#1B1B1B; }
 
 /* ---------- SHIFT modifier ---------- */
 .shift-key{
