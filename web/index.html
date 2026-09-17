@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Math Tool</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧮</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+<script>
+  window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+<h1 class="sr-only">Math Tool — calculator, equation solver, graph plotter, area under curve, and matrix suite.</h1>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="mark">&sum;</div>
+      <div><p class="name">Math Tool</p><p class="tag">v0.2.0</p></div>
+    </div>
+    <nav class="nav" id="nav">
+      <button class="nav-item active" data-page="calculator">Calculator</button>
+      <button class="nav-item" data-page="solver">Equation Solver</button>
+      <button class="nav-item" data-page="graph">Graph Plotter</button>
+      <button class="nav-item" data-page="area">Area Under Curve</button>
+      <button class="nav-item" data-page="matrix">Matrix</button>
+    </nav>
+  </aside>
+
+  <main class="main">
+
+    <!-- ============ CALCULATOR ============ -->
+    <section class="page active" id="page-calculator">
+      <div class="page-head">
+        <p class="page-eyebrow">Calculator</p>
+        <h2 class="page-title">Calculator</h2>
+        <p class="page-desc">Examples: 2+2*3, sqrt(4), sin(pi/2), 2x^2 + 3x - 5</p>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <div class="card">
+            <div class="lcd">
+              <div class="lcd-status"><span class="ind">MATH</span></div>
+              <p class="lcd-hist" id="calc-hist"></p>
+              <div class="lcd-result" id="calc-display">0</div>
+            </div>
+
+            <input type="text" class="expr-text-input" id="calc-input" placeholder="or type directly, e.g. 2x^2 + 3x - 5">
+
+            <div class="keypad-gap"></div>
+            <div class="key-grid cols-5" id="calc-mem-row">
+              <button class="key" data-mem="mc">MC</button>
+              <button class="key" data-mem="mr">MR</button>
+              <button class="key" data-mem="m+">M+</button>
+              <button class="key" data-mem="m-">M&minus;</button>
+              <button class="key" data-mem="ms">MS</button>
+            </div>
+            <div class="keypad-gap-sm"></div>
+            <div class="key-grid cols-4" id="calc-sci-grid">
+              <button class="key" data-tok="^2">x&sup2;</button>
+              <button class="key" data-tok="log(">log</button>
+              <button class="key" data-tok="ln(">ln</button>
+              <button class="key" data-tok="abs(">abs</button>
+              <button class="key" data-tok="sin(">sin</button>
+              <button class="key" data-tok="cos(">cos</button>
+              <button class="key" data-tok="tan(">tan</button>
+              <button class="key" data-tok="^">x^y</button>
+              <button class="key" data-tok="(">(</button>
+              <button class="key" data-tok=")">)</button>
+              <button class="key" data-tok="pi">&pi;</button>
+              <button class="key" data-tok="e">e</button>
+            </div>
+            <div class="keypad-gap-sm"></div>
+            <div class="key-grid cols-5">
+              <button class="key" data-tok="7">7</button>
+              <button class="key" data-tok="8">8</button>
+              <button class="key" data-tok="9">9</button>
+              <button class="key del" data-action="del">DEL</button>
+              <button class="key ac" data-action="ac">AC</button>
+              <button class="key" data-tok="4">4</button>
+              <button class="key" data-tok="5">5</button>
+              <button class="key" data-tok="6">6</button>
+              <button class="key" data-tok="*">&times;</button>
+              <button class="key" data-tok="/">&divide;</button>
+              <button class="key" data-tok="1">1</button>
+              <button class="key" data-tok="2">2</button>
+              <button class="key" data-tok="3">3</button>
+              <button class="key" data-tok="+">+</button>
+              <button class="key" data-tok="-">&minus;</button>
+              <button class="key" data-tok="0">0</button>
+              <button class="key" data-tok=".">.</button>
+              <button class="key" data-tok="*10^">&times;10&#x02e3;</button>
+              <button class="key" data-action="ans">Ans</button>
+              <button class="key eq" data-action="eq">=</button>
+            </div>
+          </div>
+
+          <div class="card" id="calc-result-card" hidden>
+            <div class="two-col">
+              <div>
+                <p class="card-label">Exact</p>
+                <div class="math-out" id="calc-exact"></div>
+              </div>
+              <div>
+                <p class="card-label">Numeric</p>
+                <div class="math-out" id="calc-numeric"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="note err" id="calc-error" hidden></div>
+        </div>
+
+        <div>
+          <div class="card">
+            <div class="tab-strip" id="calc-side-tabs">
+              <button class="active" data-tab="history">History</button>
+              <button data-tab="memory">Memory</button>
+            </div>
+            <div id="calc-history-panel">
+              <button class="btn-link" id="calc-clear-history" hidden>Clear history</button>
+              <div id="calc-history-list"></div>
+              <p class="empty-note" id="calc-history-empty">There's no history yet.</p>
+            </div>
+            <div id="calc-memory-panel" hidden>
+              <div class="mem-value" id="calc-memory-value"></div>
+              <p class="empty-note" id="calc-memory-empty">No value stored yet. Use MS to save the current result.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SOLVER ============ -->
+    <section class="page" id="page-solver">
+      <div class="page-head">
+        <p class="page-eyebrow">Equation solver</p>
+        <h2 class="page-title">Equation Solver</h2>
+        <p class="page-desc">Examples: x^2 + 3x - 5 = 0, x + y = 5</p>
+      </div>
+      <div class="card">
+        <input type="text" class="expr-text-input" id="solver-input" placeholder="e.g. x^2 + 3x - 5 = 0">
+        <div id="solver-variable-row" hidden>
+          <p class="card-label">Solve for</p>
+          <select class="select-input" id="solver-variable"></select>
+        </div>
+        <div id="solver-result" hidden>
+          <p class="card-label" id="solver-solving-for"></p>
+          <p class="card-label">Exact</p>
+          <div class="math-out" id="solver-exact"></div>
+          <p class="card-label">Numeric</p>
+          <div class="math-out" id="solver-numeric"></div>
+        </div>
+        <div class="note err" id="solver-error" hidden></div>
+      </div>
+    </section>
+
+    <!-- ============ GRAPH ============ -->
+    <section class="page" id="page-graph">
+      <div class="page-head">
+        <p class="page-eyebrow">Graph plotter</p>
+        <h2 class="page-title">Graph Plotter</h2>
+        <p class="page-desc">Single-variable functions only, e.g. sin(x) + x^2, 1/x</p>
+      </div>
+      <div class="card">
+        <input type="text" class="expr-text-input" id="graph-input" placeholder="e.g. sin(x) + x^2">
+        <div class="two-col">
+          <div>
+            <p class="card-label">x min</p>
+            <input type="number" class="num-input" id="graph-xmin" value="-10">
+          </div>
+          <div>
+            <p class="card-label">x max</p>
+            <input type="number" class="num-input" id="graph-xmax" value="10">
+          </div>
+        </div>
+        <div id="graph-plot" class="plot-box"></div>
+        <div class="note err" id="graph-error" hidden></div>
+      </div>
+    </section>
+
+    <!-- ============ AREA ============ -->
+    <section class="page" id="page-area">
+      <div class="page-head">
+        <p class="page-eyebrow">Area under curve</p>
+        <h2 class="page-title">Area Under Curve</h2>
+        <p class="page-desc">Single-variable functions only, e.g. x, x^2 - 1</p>
+      </div>
+      <div class="card">
+        <input type="text" class="expr-text-input" id="area-input" placeholder="e.g. x">
+        <div class="two-col">
+          <div>
+            <p class="card-label">a (lower bound)</p>
+            <input type="number" class="num-input" id="area-a" value="-1">
+          </div>
+          <div>
+            <p class="card-label">b (upper bound)</p>
+            <input type="number" class="num-input" id="area-b" value="1">
+          </div>
+        </div>
+        <div class="pill-row" id="area-mode">
+          <button class="pill selected" data-mode="signed">Definite Integral (Signed)</button>
+          <button class="pill" data-mode="geometric">Geometric Area</button>
+        </div>
+        <div id="area-plot" class="plot-box"></div>
+        <div class="note err" id="area-error" hidden></div>
+      </div>
+      <div class="card" id="area-result-card" hidden>
+        <p class="card-label">Result</p>
+        <div class="math-out" id="area-result"></div>
+      </div>
+    </section>
+
+    <!-- ============ MATRIX ============ -->
+    <section class="page" id="page-matrix">
+      <div class="page-head">
+        <p class="page-eyebrow">Matrix</p>
+        <h2 class="page-title">Matrix</h2>
+        <p class="page-desc">Formats: [[1,2],[3,4]] &middot; 1,2;3,4 &middot; [1,2,3] (row) &middot; [1;2;3] (column) &middot; symbolic entries OK, e.g. [[E,2],[3,x]]</p>
+      </div>
+
+      <div class="tab-row" id="matrix-tabs">
+        <button class="tab-btn active" data-tab="single">Single-matrix</button>
+        <button class="tab-btn" data-tab="two">Two-matrix</button>
+        <button class="tab-btn" data-tab="solve">Solve Ax = b</button>
+      </div>
+
+      <div class="card matrix-tab" id="matrix-tab-single">
+        <input type="text" class="expr-text-input" id="matrix-a-single" placeholder="[[1,2],[3,4]]">
+        <select class="select-input" id="matrix-op-single">
+          <option value="determinant">Determinant</option>
+          <option value="inverse">Inverse</option>
+          <option value="transpose">Transpose</option>
+          <option value="rank">Rank</option>
+          <option value="eigenvalues">Eigenvalues</option>
+        </select>
+        <div class="math-out" id="matrix-single-result"></div>
+        <div class="note err" id="matrix-single-error" hidden></div>
+      </div>
+
+      <div class="card matrix-tab" id="matrix-tab-two" hidden>
+        <div class="two-col">
+          <input type="text" class="expr-text-input" id="matrix-a-two" placeholder="[[1,2],[3,4]]">
+          <input type="text" class="expr-text-input" id="matrix-b-two" placeholder="[[5,6],[7,8]]">
+        </div>
+        <select class="select-input" id="matrix-op-two">
+          <option value="add">Add</option>
+          <option value="subtract">Subtract</option>
+          <option value="multiply">Multiply</option>
+        </select>
+        <div class="math-out" id="matrix-two-result"></div>
+        <div class="note err" id="matrix-two-error" hidden></div>
+      </div>
+
+      <div class="card matrix-tab" id="matrix-tab-solve" hidden>
+        <div class="two-col">
+          <input type="text" class="expr-text-input" id="matrix-a-solve" placeholder="[[1,1],[1,-1]]">
+          <input type="text" class="expr-text-input" id="matrix-b-solve" placeholder="[3;1]">
+        </div>
+        <div class="math-out" id="matrix-solve-result"></div>
+        <div class="note err" id="matrix-solve-error" hidden></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
