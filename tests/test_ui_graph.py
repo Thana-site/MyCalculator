@@ -12,7 +12,15 @@ from streamlit.testing.v1 import AppTest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import engine.history as history  # noqa: E402
+
 _APP_PATH = str(Path(__file__).resolve().parents[1] / "app.py")
+
+
+@pytest.fixture(autouse=True)
+def isolated_db(tmp_path, monkeypatch):
+    monkeypatch.setattr(history, "_DB_PATH", tmp_path / "test_ui_history.db")
+    yield
 
 
 def _chart_spec(at):

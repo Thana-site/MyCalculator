@@ -34,6 +34,15 @@ async function api(path, body) {
   return data;
 }
 
+async function apiRequest(method, path) {
+  const res = await fetch(path, { method });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.detail || "Request failed.");
+  }
+  return data;
+}
+
 function showError(el, message) {
   el.textContent = "";
   const strong = document.createElement("strong");
@@ -55,6 +64,7 @@ document.getElementById("nav").addEventListener("click", (e) => {
   const page = btn.dataset.page;
   document.querySelectorAll(".page").forEach((p) => p.classList.remove("active"));
   document.getElementById("page-" + page).classList.add("active");
+  if (page === "history") History.load();
 });
 
 // ---------------------------------------------------------------------------
@@ -614,9 +624,57 @@ const Matrix = (() => {
 })();
 
 // ---------------------------------------------------------------------------
+// History
+// ---------------------------------------------------------------------------
+
+const History = (() => {
+  const els = {
+    filter: document.getElementById("history-filter"),
+    clearBtn: document.getElementById("history-clear-btn"),
+    list: document.getElementById("history-list"),
+    empty: document.getElementById("history-empty"),
+  };
+
+  async function load() {
+    const mode = els.filter.value;
+    const qs = mode ? `?mode=${encodeURIComponent(mode)}` : "";
+    let data;
+    try {
+      data = await apiRequest("GET", `/api/history${qs}`);
+    } catch {
+      return;
+    }
+    els.list.innerHTML = "";
+    els.empty.hidden = data.entries.length > 0;
+    for (const entry of data.entries) {
+      const div = document.createElement("div");
+      div.className = "hist-entry";
+      div.innerHTML =
+        `<div class="hist-in">${escapeHtml(entry.mode)} &middot; ${escapeHtml(entry.created_at.replace("T", " "))}<br>` +
+        `${escapeHtml(entry.input)}</div>` +
+        `<div class="hist-out">${escapeHtml(entry.result)}</div>`;
+      els.list.appendChild(div);
+    }
+  }
+
+  function init() {
+    els.filter.addEventListener("change", load);
+    els.clearBtn.addEventListener("click", async () => {
+      const mode = els.filter.value;
+      const qs = mode ? `?mode=${encodeURIComponent(mode)}` : "";
+      await apiRequest("DELETE", `/api/history${qs}`);
+      load();
+    });
+  }
+
+  return { init, load };
+})();
+
+// ---------------------------------------------------------------------------
 
 Calc.init();
 Solver.init();
 Graph.init();
 Area.init();
 Matrix.init();
+History.init();

@@ -10,6 +10,7 @@ from engine.parser import (  # noqa: E402
     parse_expression,
     parse_equation,
     parse_matrix,
+    matrix_from_grid,
     detect_type,
     get_symbols,
 )
@@ -260,6 +261,48 @@ class TestMatrix:
     def test_invalid_cell_expression_invalid(self):
         with pytest.raises(InvalidMatrixError):
             parse_matrix("[[1,foo(x)],[3,4]]")
+
+
+class TestMatrixFromGrid:
+    def test_basic_grid(self):
+        m = matrix_from_grid([["1", "2"], ["3", "4"]])
+        assert m == sp.Matrix([[1, 2], [3, 4]])
+
+    def test_symbolic_entries(self):
+        m = matrix_from_grid([["E", "2"], ["3", "x"]])
+        assert m[0, 0] == sp.E
+        assert m[1, 1] == x
+
+    def test_parity_with_parse_matrix(self):
+        # The two input paths (bracket-text vs grid) must agree exactly,
+        # since matrix_from_grid() funnels through the same validation core.
+        from_text = parse_matrix("[[1,2],[3,4]]")
+        from_grid = matrix_from_grid([["1", "2"], ["3", "4"]])
+        assert from_text == from_grid
+
+    def test_empty_entry_invalid(self):
+        with pytest.raises(InvalidMatrixError):
+            matrix_from_grid([["1", ""], ["3", "4"]])
+
+    def test_whitespace_only_entry_invalid(self):
+        with pytest.raises(InvalidMatrixError):
+            matrix_from_grid([["1", "   "], ["3", "4"]])
+
+    def test_invalid_cell_expression_invalid(self):
+        with pytest.raises(InvalidMatrixError):
+            matrix_from_grid([["1", "foo(x)"], ["3", "4"]])
+
+    def test_empty_grid_invalid(self):
+        with pytest.raises(InvalidMatrixError):
+            matrix_from_grid([])
+
+    def test_row_vector_from_grid(self):
+        m = matrix_from_grid([["1", "2", "3"]])
+        assert m.shape == (1, 3)
+
+    def test_column_vector_from_grid(self):
+        m = matrix_from_grid([["1"], ["2"], ["3"]])
+        assert m.shape == (3, 1)
 
 
 # ---------------------------------------------------------------------------

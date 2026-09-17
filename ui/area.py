@@ -5,6 +5,7 @@ from engine.parser import parse_expression
 from engine.graph import generate_numeric_data
 from engine.integration import integrate_signed, integrate_geometric
 from engine.errors import MathToolError
+from engine.history import log_entry
 from ui import theme
 
 
@@ -45,6 +46,11 @@ def render() -> None:
         except MathToolError as e:
             theme.note(f"<strong>Error</strong> — {theme.esc(e)}", err=True)
             return
+
+        try:
+            log_entry("Area Under Curve", f"{text} on [{a}, {b}] ({area_type})", str(result))
+        except Exception:  # noqa: BLE001 — history is best-effort
+            pass
 
         fig = go.Figure()
         fig.add_trace(go.Scatter(

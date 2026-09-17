@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 from engine.parser import parse_expression
 from engine.graph import generate_numeric_data
 from engine.errors import MathToolError
+from engine.history import log_entry
 from ui import theme
 
 # Cycled per function row, same order every time so a given row keeps its
@@ -118,6 +119,10 @@ def render() -> None:
                     line=dict(color=fn["color"], width=2),
                 ))
                 any_plotted = True
+                try:
+                    log_entry("Graph Plotter", f"f{i + 1}(x)={text}", f"plotted over [{x_min}, {x_max}]")
+                except Exception:  # noqa: BLE001 — history is best-effort
+                    pass
 
             fig.update_layout(
                 xaxis_title="x",

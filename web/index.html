@@ -22,7 +22,7 @@
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="mark">&sum;</div>
-      <div><p class="name">Math Tool</p><p class="tag">v0.2.0</p></div>
+      <div><p class="name">Math Tool</p><p class="tag">v0.5.0</p></div>
     </div>
     <nav class="nav" id="nav">
       <button class="nav-item active" data-page="calculator">Calculator</button>
@@ -30,6 +30,7 @@
       <button class="nav-item" data-page="graph">Graph Plotter</button>
       <button class="nav-item" data-page="area">Area Under Curve</button>
       <button class="nav-item" data-page="matrix">Matrix</button>
+      <button class="nav-item" data-page="history">History</button>
     </nav>
   </aside>
 
@@ -266,6 +267,30 @@
         </div>
         <div class="math-out" id="matrix-solve-result"></div>
         <div class="note err" id="matrix-solve-error" hidden></div>
+      </div>
+    </section>
+
+    <!-- ============ HISTORY ============ -->
+    <section class="page" id="page-history">
+      <div class="page-head">
+        <p class="page-eyebrow">History</p>
+        <h2 class="page-title">History</h2>
+        <p class="page-desc">Persistent log of past calculations across every mode (stored in data/history.db, survives restarts — shared with the Streamlit app if you run both against the same folder).</p>
+      </div>
+      <div class="card">
+        <div class="two-col">
+          <select class="select-input" id="history-filter">
+            <option value="">All</option>
+            <option value="Calculator">Calculator</option>
+            <option value="Equation Solver">Equation Solver</option>
+            <option value="Graph Plotter">Graph Plotter</option>
+            <option value="Area Under Curve">Area Under Curve</option>
+            <option value="Matrix">Matrix</option>
+          </select>
+          <button class="btn" id="history-clear-btn">Clear</button>
+        </div>
+        <div id="history-list"></div>
+        <p class="empty-note" id="history-empty">No history yet — results from other pages will appear here.</p>
       </div>
     </section>
 

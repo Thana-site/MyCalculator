@@ -2,9 +2,9 @@
 UI smoke tests for the Calculator page, using streamlit.testing.v1.AppTest.
 
 These exercise the app through app.py exactly as a user's clicks would,
-asserting on st.session_state rather than rendered HTML — the same level
-the rest of this project tests at (engine behavior via public functions,
-not implementation details).
+asserting on st.session_state (and, for history, the real engine.history
+module) rather than rendered HTML — the same level the rest of this
+project tests at.
 """
 
 import sys
@@ -16,7 +16,17 @@ from streamlit.testing.v1 import AppTest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import engine.history as history  # noqa: E402
+
 _APP_PATH = str(Path(__file__).resolve().parents[1] / "app.py")
+
+
+@pytest.fixture(autouse=True)
+def isolated_db(tmp_path, monkeypatch):
+    """Every test gets its own throwaway SQLite file — never touches the
+    real data/history.db."""
+    monkeypatch.setattr(history, "_DB_PATH", tmp_path / "test_ui_history.db")
+    yield
 
 
 @pytest.fixture
@@ -36,12 +46,16 @@ def test_digit_and_operator_keys_append_to_expression(at):
     assert at.session_state.calc_expression == "7"
 
 
-def test_equals_evaluates_and_logs_history(at):
+def test_equals_evaluates_and_logs_real_history(at):
     at.button(key="btn_num-2").click().run()
     at.button(key="btn_eq").click().run()
     assert not at.exception
     assert at.session_state.calc_last_result == 2
-    assert at.session_state.calc_history[0] == {"expr": "2", "result": sp.Integer(2)}
+
+    entries = history.get_history(mode="Calculator")
+    assert len(entries) == 1
+    assert entries[0].input_text == "2"
+    assert entries[0].result_text == "2"
 
 
 def test_equals_on_invalid_expression_sets_error_not_exception(at):
@@ -167,11 +181,18 @@ class TestHistoryChips:
     def test_chip_appears_after_evaluating_and_reloads_expression(self, at):
         at.button(key="btn_num-9").click().run()
         at.button(key="btn_eq").click().run()
-        chip = at.button(key="btn_chip_0")
+
+        entries = history.get_history(mode="Calculator")
+        chip_key = f"btn_chip_{entries[0].id}"
+        chip = at.button(key=chip_key)
         assert chip.label == "9"
 
         at.button(key="btn_num-1").click().run()  # dirty the expression
         assert at.session_state.calc_expression == "91"
-        at.button(key="btn_chip_0").click().run()
+        at.button(key=chip_key).click().run()
         assert at.session_state.calc_expression == "9"
         assert at.session_state.calc_last_result is None  # cleared until re-evaluated
+
+    def test_no_chips_row_when_history_empty(self, at):
+        assert history.get_history(mode="Calculator") == []
+        assert not any(b.key and b.key.startswith("btn_chip_") for b in at.button)

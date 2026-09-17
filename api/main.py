@@ -22,9 +22,17 @@ from engine import matrix as mx
 from engine.calculator import evaluate, to_numeric
 from engine.errors import MathToolError
 from engine.graph import generate_numeric_data
+from engine.history import clear_history, get_history, log_entry
 from engine.integration import integrate_geometric, integrate_signed
 from engine.parser import get_symbols, parse_equation, parse_expression, parse_matrix
 from engine.solver import solve_equation
+
+
+def _log(mode: str, input_text: str, result_text: str) -> None:
+    try:
+        log_entry(mode, input_text, result_text)
+    except Exception:  # noqa: BLE001 — history is best-effort, never block the response
+        pass
 
 app = FastAPI(title="Math Tool API")
 
@@ -69,6 +77,7 @@ def calculate(req: ExpressionRequest) -> dict:
         result = evaluate(expr)
     except MathToolError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+    _log("Calculator", req.expression, str(result))
     return _expr_payload(result)
 
 
@@ -98,6 +107,8 @@ def solve(req: EquationRequest) -> dict:
     except MathToolError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
+    summary = ", ".join(str(s) for s in result["exact"]) or "no solution"
+    _log("Equation Solver", req.equation, f"{result['variable']} = {summary}")
     return {
         "needs_variable": False,
         "symbols": [s.name for s in symbols],
@@ -126,6 +137,7 @@ def graph(req: GraphRequest) -> dict:
         x_vals, y_vals = generate_numeric_data(expr, req.x_min, req.x_max)
     except MathToolError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+    _log("Graph Plotter", req.expression, f"plotted over [{req.x_min}, {req.x_max}]")
     return {"x": _clean_floats(x_vals), "y": _clean_floats(y_vals)}
 
 
@@ -154,6 +166,7 @@ def area(req: AreaRequest) -> dict:
         x_vals, y_vals = generate_numeric_data(expr, req.a, req.b)
     except MathToolError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+    _log("Area Under Curve", f"{req.expression} on [{req.a}, {req.b}] ({req.mode})", str(result))
     return {
         **_expr_payload(result),
         "x": _clean_floats(x_vals),
@@ -175,14 +188,23 @@ def matrix_single(req: MatrixSingleRequest) -> dict:
     try:
         A = parse_matrix(req.matrix)
         if req.operation == "determinant":
-            return _expr_payload(mx.determinant(A))
+            result = mx.determinant(A)
+            _log("Matrix", f"Determinant({sp.sstr(A)})", str(result))
+            return _expr_payload(result)
         if req.operation == "inverse":
-            return _expr_payload(mx.inverse(A))
+            result = mx.inverse(A)
+            _log("Matrix", f"Inverse({sp.sstr(A)})", str(result))
+            return _expr_payload(result)
         if req.operation == "transpose":
-            return _expr_payload(mx.transpose(A))
+            result = mx.transpose(A)
+            _log("Matrix", f"Transpose({sp.sstr(A)})", str(result))
+            return _expr_payload(result)
         if req.operation == "rank":
-            return {"plain": str(mx.rank(A))}
+            result = mx.rank(A)
+            _log("Matrix", f"Rank({sp.sstr(A)})", str(result))
+            return {"plain": str(result)}
         eigenvalues = mx.eigen(A)
+        _log("Matrix", f"Eigenvalues({sp.sstr(A)})", str(eigenvalues))
     except MathToolError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     return {
@@ -212,6 +234,7 @@ def matrix_two(req: MatrixTwoRequest) -> dict:
             result = mx.multiply(A, B)
     except MathToolError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+    _log("Matrix", f"{req.operation}({sp.sstr(A)}, {sp.sstr(B)})", str(result))
     return _expr_payload(result)
 
 
@@ -228,7 +251,32 @@ def matrix_solve(req: MatrixSolveRequest) -> dict:
         result = mx.solve_linear_system(A, b)
     except MathToolError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+    _log("Matrix", f"Solve({sp.sstr(A)}, {sp.sstr(b)})", str(result))
     return _expr_payload(result)
+
+
+# ---------------------------------------------------------------------------
+# History
+# ---------------------------------------------------------------------------
+
+@app.get("/api/history")
+def history(mode: str | None = None, limit: int = 100) -> dict:
+    entries = get_history(limit=limit, mode=mode)
+    return {
+        "entries": [
+            {
+                "id": e.id, "mode": e.mode, "input": e.input_text,
+                "result": e.result_text, "created_at": e.created_at,
+            }
+            for e in entries
+        ]
+    }
+
+
+@app.delete("/api/history")
+def history_clear(mode: str | None = None) -> dict:
+    deleted = clear_history(mode=mode)
+    return {"deleted": deleted}
 
 
 # ---------------------------------------------------------------------------

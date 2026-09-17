@@ -9,7 +9,8 @@ Locked responsibilities (per spec):
 Public API:
     parse_expression(text) -> sp.Expr
     parse_equation(text)   -> sp.Eq            (evaluate=False, exactly one '=')
-    parse_matrix(text)     -> sp.Matrix        (cells parsed via parse_expression)
+    parse_matrix(text)     -> sp.Matrix        (bracket-text grammar, cells via parse_expression)
+    matrix_from_grid(rows) -> sp.Matrix        (2D list of cell strings, e.g. from a UI grid)
     detect_type(text)      -> "expression" | "equation" | "matrix"   (UI-only helper)
     get_symbols(obj)       -> list[sp.Symbol]  (deterministic, sorted by name)
 """
@@ -251,12 +252,12 @@ def _extract_matrix_rows(text: str) -> list[list[str]]:
     return [[c.strip() for c in row.split(",")] for row in text.split(";")]
 
 
-def parse_matrix(text: str) -> sp.Matrix:
-    if text is None or not text.strip():
-        raise InvalidMatrixError("Matrix cannot be empty.")
-
-    rows_str = _extract_matrix_rows(text)
-
+def _matrix_from_str_rows(rows_str: list[list[str]]) -> sp.Matrix:
+    """Shared core: validate a 2D grid of cell strings and parse each cell
+    via parse_expression(). Both parse_matrix() (bracket-text grammar) and
+    matrix_from_grid() (UI grid/table input) funnel through this, so the
+    two input paths can never silently diverge in behavior.
+    """
     if not rows_str or len(rows_str[0]) == 0:
         raise InvalidMatrixError("Matrix cannot be empty.")
 
@@ -266,7 +267,7 @@ def parse_matrix(text: str) -> sp.Matrix:
             raise InvalidMatrixError(
                 "All rows must have the same number of columns."
             )
-        if any(cell == "" for cell in row):
+        if any(cell.strip() == "" for cell in row):
             raise InvalidMatrixError("Matrix contains an empty entry.")
 
     try:
@@ -275,6 +276,23 @@ def parse_matrix(text: str) -> sp.Matrix:
         raise InvalidMatrixError(f"Invalid matrix entry: {exc}") from exc
 
     return sp.Matrix(parsed_rows)
+
+
+def parse_matrix(text: str) -> sp.Matrix:
+    if text is None or not text.strip():
+        raise InvalidMatrixError("Matrix cannot be empty.")
+
+    rows_str = _extract_matrix_rows(text)
+    return _matrix_from_str_rows(rows_str)
+
+
+def matrix_from_grid(rows: list[list[str]]) -> sp.Matrix:
+    """Build a matrix from a 2D grid of cell strings — the entry point for
+    a UI grid/table editor (e.g. st.data_editor), as opposed to bracket-text
+    syntax. Symbolic entries are supported exactly as in parse_matrix(),
+    since both share _matrix_from_str_rows().
+    """
+    return _matrix_from_str_rows(rows)
 
 
 # ---------------------------------------------------------------------------

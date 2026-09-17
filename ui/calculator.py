@@ -4,6 +4,7 @@ import sympy as sp
 from engine.parser import parse_expression
 from engine.calculator import evaluate, to_numeric
 from engine.errors import MathToolError
+from engine.history import get_history, log_entry, clear_history
 from ui import theme
 
 # ---------------------------------------------------------------------------
@@ -140,8 +141,10 @@ def _equals() -> None:
     st.session_state.calc_prev_line = f"{text} ="
     st.session_state.calc_expression = str(result)
     st.session_state.calc_last_result = result
-    st.session_state.calc_history.insert(0, {"expr": text, "result": result})
-    del st.session_state.calc_history[_HISTORY_LIMIT:]
+    try:
+        log_entry("Calculator", text, str(result))
+    except Exception:  # noqa: BLE001 — history is best-effort, never block the result
+        pass
 
 
 def _reload_from_history(expr: str) -> None:
@@ -200,7 +203,10 @@ def _mem_store() -> None:
 
 
 def _clear_history() -> None:
-    st.session_state.calc_history = []
+    try:
+        clear_history(mode="Calculator")
+    except Exception:  # noqa: BLE001 — history is best-effort
+        pass
 
 
 _MEM_ACTIONS = {
@@ -246,24 +252,20 @@ def _render_function_grid(rows: list) -> None:
 
 
 def _render_history_chips() -> None:
-    seen = set()
-    chips = []
-    for entry in st.session_state.calc_history:
-        if entry["expr"] not in seen:
-            seen.add(entry["expr"])
-            chips.append(entry["expr"])
-        if len(chips) >= _CHIP_LIMIT:
-            break
-    if not chips:
+    try:
+        entries = get_history(limit=_CHIP_LIMIT, mode="Calculator")
+    except Exception:  # noqa: BLE001 — history is best-effort
+        entries = []
+    if not entries:
         return
     st.html('<div style="height:6px"></div>')
-    cols = st.columns(len(chips))
-    for i, (col, expr) in enumerate(zip(cols, chips)):
-        with col.container(key=f"chip-{i}"):
+    cols = st.columns(len(entries))
+    for col, entry in zip(cols, entries):
+        with col.container(key=f"chip-{entry.id}"):
             st.button(
-                expr, key=f"btn_chip_{i}",
-                on_click=_reload_from_history, args=(expr,),
-                help="Reload into the expression field", width="stretch",
+                entry.input_text, key=f"btn_chip_{entry.id}",
+                on_click=_reload_from_history, args=(entry.input_text,),
+                help=f"= {entry.result_text} — click to reload", width="stretch",
             )
 
 
@@ -348,14 +350,17 @@ def _render_side_panel() -> None:
         tab_hist, tab_mem = st.tabs(["History", "Memory"])
 
         with tab_hist:
-            history = st.session_state.calc_history
+            try:
+                history = get_history(limit=_HISTORY_LIMIT, mode="Calculator")
+            except Exception:  # noqa: BLE001 — history is best-effort
+                history = []
             if not history:
                 theme.empty_note("There's no history yet.")
             else:
                 st.button("Clear history", key="btn_clear_history", on_click=_clear_history)
                 for entry in history:
                     theme.history_entry(
-                        f"{theme.esc(entry['expr'])} =", theme.esc(entry["result"])
+                        f"{theme.esc(entry.input_text)} =", theme.esc(entry.result_text)
                     )
 
         with tab_mem:
@@ -378,7 +383,6 @@ def render() -> None:
         ("calc_prev_line", ""),
         ("calc_error", None),
         ("calc_last_result", None),
-        ("calc_history", []),
         ("calc_memory", None),
         ("shift_active", False),
     ]:

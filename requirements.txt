@@ -7,6 +7,8 @@ fastapi>=0.110
 uvicorn[standard]>=0.29
 pydantic>=2.6
 
-# Streamlit UI (legacy; kept alongside the FastAPI backend)
+# Streamlit UI (primary — full feature set: SHIFT+tabs calculator,
+# multi-function graph, matrix grid input, persistent history)
 streamlit>=1.37
 plotly>=5.20
+pandas>=2.0

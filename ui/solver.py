@@ -4,6 +4,7 @@ import sympy as sp
 from engine.parser import parse_equation, get_symbols
 from engine.solver import solve_equation
 from engine.errors import MathToolError
+from engine.history import log_entry
 from ui import theme
 
 
@@ -43,6 +44,12 @@ def render() -> None:
         except MathToolError as e:
             theme.note(f"<strong>Error</strong> — {theme.esc(e)}", err=True)
             return
+
+        try:
+            summary = ", ".join(str(s) for s in result["exact"]) or "no solution"
+            log_entry("Equation Solver", text, f"{result['variable']} = {summary}")
+        except Exception:  # noqa: BLE001 — history is best-effort
+            pass
 
     with theme.card("solver-result-card"):
         st.markdown(
